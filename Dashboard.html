@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Vault Dashboard</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <style>
+        body { font-family: system-ui; max-width: 800px; margin: 0 auto; padding: 20px; background: #0d1117; color: #c9d1d9; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin: 12px 0; }
+        .position { border-left: 3px solid #238636; }
+        .liquidatable { border-left: 3px solid #da3633; }
+        h1 { color: #58a6ff; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .healthy { background: #1f6feb; color: white; }
+        .danger { background: #da3633; color: white; }
+        button { background: #238636; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #2ea043; }
+        input { background: #0d1117; border: 1px solid #30363d; color: white; padding: 8px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <h1>🏦 NFT Vault Dashboard</h1>
+    <div class="card">
+        <label>Wallet: <input id="wallet" placeholder="0x..."></label>
+        <button onclick="connectWallet()">Connect</button>
+    </div>
+    <div id="positions"></div>
+    <div id="oracle" class="card"></div>
+    <script>
+        const RPC_URL = "https://cloudflare-eth.com";
+        const VAULT_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
+        const ORACLE_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44f";
+        const LIQUIDATION_ADDRESS = "0x742d35Cc6634C0532925a3b844Bc454e4438f44d";
+        let provider, signer, userAddress;
+        let vaultContract, oracleContract, liquidationContract;
+
+        async function connectWallet() {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+                userAddress = accounts[0];
+                document.getElementById("wallet").value = userAddress;
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                setupContracts();
+                fetchPositions();
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        function setupContracts() {
+            const vaultABI = [{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"getPosition","outputs":[{"internalType":"uint256","name":"nftId","type":"uint256"},{"internalType":"uint256","name":"borrowedAmount","type":"uint256"},{"internalType":"bool","name":"active","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getPositionCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"oraclePrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"volatilityMultiplier","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_LTV","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}];
+            const liquidationABI = [{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"nftId","type":"uint256"}],"name":"getHealthFactor","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}];
+            vaultContract = new ethers.Contract(VAULT_ADDRESS, vaultABI, provider);
+            liquidationContract = new ethers.Contract(LIQUIDATION_ADDRESS, liquidationABI, provider);
+        }
+
+        async function fetchPositions() {
+            if (!userAddress) return;
+            const count = await vaultContract.getPositionCount(userAddress);
+            const positionsDiv = document.getElementById("positions");
+            positionsDiv.innerHTML = "";
+            for (let i = 0; i < count; i++) {
+                const pos = await vaultContract.getPosition(userAddress, i);
+                const nftId = pos.nftId.toString();
+                const borrowed = pos.borrowedAmount.toString();
+                const active = pos.active;
+                const healthFactor = await liquidationContract.getHealthFactor(userAddress, nftId);
+                const isLiquidatable = healthFactor < 10000;
+                const card = document.createElement("div");
+                card.className = "card position " + (isLiquidatable ? "liquidatable" : "");
+                card.innerHTML = `
+                    <strong>NFT #${nftId}</strong><br>
+                    Borrowed: ${borrowed} USDC<br>
+                    Health Factor: ${healthFactor}<br>
+                    <span class="status ${isLiquidatable ? "danger" : "healthy"}">${isLiquidatable ? "⚠️ LIQUIDATION RISK" : "✅ HEALTHY"}</span>
+                `;
+                positionsDiv.appendChild(card);
+            }
+            const oraclePrice = await vaultContract.oraclePrice();
+            const volatility = await vaultContract.volatilityMultiplier();
+            document.getElementById("oracle").innerHTML = `<strong>Oracle Price:</strong> ${oraclePrice} | Volatility: ${volatility} | MAX LTV: ${await vaultContract.MAX_LTV()}%`;
+        }
+    </script>
+</body>
+</html>
