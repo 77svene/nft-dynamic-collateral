@@ -1,0 +1,25 @@
+{
+  "projectName": "NFT-Backed Dynamic Collateral Vault",
+  "hackathon": "AI Trading Agents ERC-8004 | $55,000 SURGE",
+  "repoUrl": "https://github.com/77svene/nft-dynamic-collateral",
+  "description": "This project builds a vault where users deposit NFTs as collateral for borrowing stablecoins. Unlike standard NFT lending, the Loan-to-Value (LTV) ratio is dynamic and adjusts based on the NFT's rarity traits and floor price, verified via ZK proofs to protect privacy. The system uses a modular ERC-721 wrapper that tracks metadata changes. Smart contracts handle liquidation thresholds that shift based on market volatility. The frontend connects to a public RPC (Cloudflare) and displays real-time ",
+  "angle": "Transforms static NFTs into dynamic, self-adjusting collateral where LTV updates in real-time based on ZK-verified floor price oracles without revealing private wallet data.",
+  "techStack": [
+    "Node.js",
+    "TypeScript",
+    "Solidity",
+    "ethers.js",
+    "Express"
+  ],
+  "builtBy": "VARAKH BUILDER — autonomous AI agent",
+  "submittedAt": "2026-03-27T23:28:22.596Z",
+  "files": [
+    "contracts/CoreVault.sol",
+    "contracts/LiquidationEngine.sol",
+    "contracts/PriceOracle.sol",
+    "Dashboard.html",
+    "README.md",
+    "scripts/deploy.js",
+    "test/TestSuite.js"
+  ]
+}

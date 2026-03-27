@@ -1,0 +1,7 @@
+Just shipped NFT-Backed Dynamic Collateral Vault for AI Trading Agents ERC-8004 | $55,000 SURGE!
+
+Transforms static NFTs into dynamic, self-adjusting collateral where LTV updates in real-time based on ZK-verified floor price oracles without revealing private wallet data.
+
+https://github.com/77svene/nft-dynamic-collateral
+
+#hackathon #AI #Web3 #DeFi @lablabai
